@@ -2,8 +2,50 @@ import tkinter as tk
 from tkinter import ttk
 from PIL import Image, ImageTk
 from estado import estado_ejecucion, lock  
+import wiringpi
+import time
 
+# Configurar WiringPi en modo GPIO
+wiringpi.wiringPiSetup()
 
+# Definir los pines de los LEDS
+LED_PINS = [3, 4, 6, 9, 10]
+
+# Configurar los pines como salida
+for pin in LED_PINS:
+    wiringpi.pinMode(pin, 1)  # 1 = OUTPUT
+
+def alarmas():
+    valor = estado_ejecucion["indicador"]
+    print(valor)
+    if valor >= 75:
+        wiringpi.digitalWrite(3, 0)
+        wiringpi.digitalWrite(4, 1)
+        wiringpi.digitalWrite(6, 1)
+        wiringpi.digitalWrite(9, 0)
+        wiringpi.digitalWrite(10, 0)
+        time.sleep(0.1)
+        wiringpi.digitalWrite(6, 0)
+        time.sleep(0.7)
+        
+    elif 50 <= valor < 75:
+        wiringpi.digitalWrite(3, 1)
+        wiringpi.digitalWrite(4, 0)
+        wiringpi.digitalWrite(6, 0)
+        wiringpi.digitalWrite(9, 0)
+        wiringpi.digitalWrite(10, 0)
+    elif 25 <= valor < 50:
+        wiringpi.digitalWrite(3, 0)
+        wiringpi.digitalWrite(4, 0)
+        wiringpi.digitalWrite(6, 0)
+        wiringpi.digitalWrite(9, 1)
+        wiringpi.digitalWrite(10, 0)
+    else:
+        wiringpi.digitalWrite(3, 0)
+        wiringpi.digitalWrite(4, 0)
+        wiringpi.digitalWrite(6, 0)
+        wiringpi.digitalWrite(9, 0)
+        wiringpi.digitalWrite(10, 1)
 
 def actualizar_color_progreso(progress_bar, valor, style):
     if valor <= 25:
@@ -30,6 +72,7 @@ def actualizar_valor(label, progress_bar, canvas, semaforo_luces,style):
     label.config(text=f"Nivel de fatiga actual: {valor}%")
     actualizar_color_progreso(progress_bar, valor,style)  
     actualizar_semaforo(canvas, semaforo_luces, valor)
+    alarmas() 
     label.after(1000, lambda: actualizar_valor(label, progress_bar, canvas, semaforo_luces,style))
 
 
@@ -68,7 +111,6 @@ def crear_interfaz():
     root.title("Monitor de Fatiga")
     root.geometry("800x535")
     root.configure(bg="#DCDCDC")
-    
     # Inicializa el estilo después de crear root
     style = ttk.Style(root)
 
@@ -80,7 +122,7 @@ def crear_interfaz():
 
     label_imagen = tk.Label(frame_imagen, bg="#DCDCDC")
     label_imagen.pack(expand=True)
-    cargar_imagen(label_imagen, "/home/juan/Imágenes/01.png")
+    cargar_imagen(label_imagen, "/home/orangepi/Escritorio/CODIGO_FINAL/01.png")
 
     frame_controles = tk.Frame(frame_principal, bg="#DCDCDC", padx=10, pady=10)
     frame_controles.pack(side="left", fill="y")
@@ -178,8 +220,9 @@ def crear_interfaz():
         luz = canvas_futuro.create_oval(x0, y0, x1, y1, fill="#bdc3c7", outline="black", width=2)
         semaforo_luces_futuro.append(luz)
         canvas_futuro.create_text((x0 + x1) / 2, y1 + 15, text=etiquetas[i], fill="black", font=("Helvetica", 11))
-
+    
     actualizar_valor(label_valor, progress_bar, canvas, semaforo_luces,style)
     actualizar_valor3(label_valor_futuro, progress_bar_futuro, canvas_futuro, semaforo_luces_futuro, style)
-
+    alarmas()
     root.mainloop()
+    
