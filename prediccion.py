@@ -50,11 +50,6 @@ def hacer_prediccion():
 
         print("Predicción calculada y guardada en CSV.")
 
-        # Guardar gráfica
-        plt.close('all')
-        fig, ax = plt.subplots(figsize=(10, 5))
-        model.plot(forecast, ax=ax)
-        plt.legend()
-        plt.savefig("prediccion.png")
+       
     else:
         print("No hay datos para entrenar")
